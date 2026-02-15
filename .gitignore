@@ -1,0 +1,22 @@
+# Dependencies - Too big to upload (Render runs 'npm install' anyway)
+node_modules/
+jspm_packages/
+
+# Environment Variables - CRITICAL: Contains your passwords/API keys
+.env
+.env.local
+.env.*.local
+
+# Build folders
+dist/
+build/
+.cache/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS specific files
+.DS_Store
+Thumbs.db
