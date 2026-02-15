@@ -57,13 +57,16 @@ class DatabaseManager {
     createConnection() {
         try {
             // Create connection pool with optimized settings
+            // Supports both Railway (MYSQL*) and local XAMPP (DB_*) environment variables
             this.db = mysql.createPool({
-                // Database server configuration (from environment variables or defaults)
-                host: process.env.DB_HOST || "localhost", // MySQL server hostname
-                user: process.env.DB_USER || "root", // MySQL username
-                password: process.env.DB_PASSWORD || "", // MySQL password
-                database: process.env.DB_NAME || "document_request_db", // Target database name
-                port: process.env.DB_PORT || 3306, // MySQL port
+                // Database server configuration
+                // Railway provides: MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE, MYSQLPORT
+                // Local XAMPP uses: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT
+                host: process.env.MYSQLHOST || process.env.DB_HOST || "localhost",
+                user: process.env.MYSQLUSER || process.env.DB_USER || "root",
+                password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || "",
+                database: process.env.MYSQLDATABASE || process.env.DB_NAME || "document_request_db",
+                port: process.env.MYSQLPORT || process.env.DB_PORT || 3306,
 
                 // Pool configuration for performance and reliability
                 connectionLimit: 10, // Maximum number of connections in pool
@@ -74,6 +77,8 @@ class DatabaseManager {
             });
 
             console.log('🔗 MySQL connection pool created successfully');
+            console.log(`   Host: ${process.env.MYSQLHOST || process.env.DB_HOST || 'localhost'}`);
+            console.log(`   Database: ${process.env.MYSQLDATABASE || process.env.DB_NAME || 'document_request_db'}`);
             return this.db;
 
         } catch (error) {
@@ -169,14 +174,19 @@ class DatabaseManager {
 
             console.log('🔄 Starting database initialization...');
 
+            // Get database name from environment variables (supports Railway and local XAMPP)
+            const dbName = process.env.MYSQLDATABASE || process.env.DB_NAME || 'document_request_db';
+            console.log(`📊 Using database: ${dbName}`);
+
             // Step 1: Create database if it doesn't exist
             // Uses raw query for DDL (Data Definition Language) commands
-            await this.executeRawQuery('CREATE DATABASE IF NOT EXISTS document_request_db');
-            console.log('📊 Database "document_request_db" created or already exists');
+            // Note: On Railway, the database is usually pre-created, so this may fail silently
+            await this.executeRawQuery(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+            console.log(`📊 Database "${dbName}" created or already exists`);
 
             // Step 2: Switch to the target database context
-            await this.executeRawQuery('USE document_request_db');
-            console.log('📊 Switched to document_request_db');
+            await this.executeRawQuery(`USE \`${dbName}\``);
+            console.log(`📊 Switched to ${dbName}`);
 
             // Step 3: Create all required tables with proper structure
             await this.createTables();
